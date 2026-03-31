@@ -1,14 +1,19 @@
 import random
+from typing import Optional, Dict, Any, List
 from uuid import uuid4
-from typing import Optional
 
 from openenv.core.env_server.interfaces import Environment
 from openenv.core.env_server.types import State
 
-from crree_env.models import CrreeAction, CrreeObservation
-from crree_env.tasks import TASKS
-from crree_env.reward import compute_reward
-from crree_env.utils import monitor
+from models import CrreeAction, CrreeObservation
+from tasks import TASKS
+from reward import compute_reward
+from utils import monitor
+from db import save_evaluation
+
+# Global state for the environment (single-agent benchmark)
+_CURRENT_TASK = None
+_MAX_STEPS = 1
 
 class CrreeEnvironment(Environment):
     """AI Code Review Environment - OpenEnv v2.0."""
@@ -17,59 +22,65 @@ class CrreeEnvironment(Environment):
 
     def __init__(self):
         self._state = State(episode_id=str(uuid4()), step_count=0)
-        self.current_task = None
-        self.max_steps = 1
+
+    @property
+    def state(self) -> State:
+        return self._state
 
     def reset(self, **kwargs) -> CrreeObservation:
         self._state = State(episode_id=str(uuid4()), step_count=0)
         
+        global _CURRENT_TASK
         task_id = kwargs.get("task_id")
         if task_id:
-            self.current_task = next((t for t in TASKS if t.id == task_id), None)
+            _CURRENT_TASK = next((t for t in TASKS if t.id == task_id), None)
         else:
-            self.current_task = random.choice(TASKS)
+            _CURRENT_TASK = random.choice(TASKS)
             
-        if not self.current_task:
-            self.current_task = TASKS[0] 
+        if not _CURRENT_TASK:
+            _CURRENT_TASK = TASKS[0] 
             
         return CrreeObservation(
-            pr_id=self.current_task.id,
+            pr_id=_CURRENT_TASK.id,
             repo_name="demo-repo",
-            diff=self.current_task.diff,
-            context=self.current_task.description,
+            diff=_CURRENT_TASK.diff,
+            context=_CURRENT_TASK.description,
             step_count=0,
-            max_steps=self.max_steps,
+            max_steps=_MAX_STEPS,
             goal="Identify all bugs, assess severity, and provide fix suggestions.",
             done=False,
             reward=0.0
         )
 
     def step(self, action: CrreeAction) -> CrreeObservation:
-        if not self.current_task:
-             self.current_task = TASKS[0] # Auto-reset to first task if missing
+        global _CURRENT_TASK
+        if not _CURRENT_TASK:
+             _CURRENT_TASK = TASKS[0] 
             
         monitor.start()
         self._state.step_count += 1
         
-        reward_obj = compute_reward(action, self.current_task)
-        done = self._state.step_count >= self.max_steps
+        reward_obj = compute_reward(action, _CURRENT_TASK)
+        done = self._state.step_count >= _MAX_STEPS
+        
+        # Save to database for metrics/history
+        save_evaluation(_CURRENT_TASK.id, reward_obj.score, reward_obj.breakdown, reward_obj.performance_metrics)
         
         return CrreeObservation(
-            pr_id=self.current_task.id,
+            pr_id=_CURRENT_TASK.id,
             repo_name="demo-repo",
-            diff=self.current_task.diff,
-            context=self.current_task.description,
+            diff=_CURRENT_TASK.diff,
+            context=_CURRENT_TASK.description,
             step_count=self._state.step_count,
-            max_steps=self.max_steps,
+            max_steps=_MAX_STEPS,
             goal="Review completed." if done else "Continue review.",
             done=done,
             reward=reward_obj.score,
-            metadata={
-                "breakdown": reward_obj.breakdown,
-                "performance": reward_obj.performance_metrics
-            }
+            bug_detection=reward_obj.breakdown.get("bug_detection", 0.0),
+            severity_accuracy=reward_obj.breakdown.get("severity_accuracy", 0.0),
+            suggestion_quality=reward_obj.breakdown.get("suggestion_quality", 0.0),
+            security_score=reward_obj.breakdown.get("security_score", 0.0),
+            latency_ms=reward_obj.performance_metrics.get("latency_ms", 0.0),
+            memory_mb=reward_obj.performance_metrics.get("memory_mb", 0.0),
+            metadata=reward_obj.breakdown
         )
-
-    @property
-    def state(self) -> State:
-        return self._state

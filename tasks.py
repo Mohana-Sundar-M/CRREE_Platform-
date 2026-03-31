@@ -1,4 +1,4 @@
-from crree_env.models import Task
+from models import Task
 
 TASKS = [
     Task(

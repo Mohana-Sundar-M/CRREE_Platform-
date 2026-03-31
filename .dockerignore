@@ -1,0 +1,10 @@
+.venv
+__pycache__
+*.pyc
+.pytest_cache
+eval_history.db
+.git
+.gitignore
+*.detailed
+verify_full_eval.py
+tests/

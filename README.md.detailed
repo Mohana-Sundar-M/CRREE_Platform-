@@ -1,4 +1,4 @@
-# 🏆 CRREE Platform: AI Code Review & Risk Evaluation Environment
+#   CRREE Platform: AI Code Review & Risk Evaluation Environment
 
 [![OpenEnv Compliant](https://img.shields.io/badge/OpenEnv-Compliant-brightgreen)](https://github.com/openenv/openenv)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
@@ -8,7 +8,7 @@
 
 ---
 
-## 📖 Table of Contents
+##   Table of Contents
 1. [Executive Summary](#-executive-summary)
 2. [Strategic Positioning](#-strategic-positioning)
 3. [Architecture & System Design](#-architecture--system-design)
@@ -20,12 +20,12 @@
 
 ---
 
-## 📄 Executive Summary
+##   Executive Summary
 The **CRREE Platform** is a high-fidelity simulation environment designed to benchmark Large Language Models (LLMs) on their ability to perform professional-grade code reviews. Unlike traditional static analysis tools, CRREE evaluates the *subtle* logic flaws, architectural anti-patterns, and security vulnerabilities that typically require a senior engineer's intuition. By leveraging Hugging Face's semantic models, it provides a deterministic yet context-aware reward system for AI agents.
 
 ---
 
-## 🚀 Strategic Positioning
+##   Strategic Positioning
 - **Semantic Intelligence**: Uses `sentence-transformers` to move beyond keyword matching, understanding the *intent* behind an AI's suggestion.
 - **Holistic Evaluation**: Integrates security (Bandit), complexity (Radon), and performance (psutil) into a single unified score.
 - **Deterministic Rewards**: Provides clear reward shaping for Reinforcement Learning from Human Feedback (RLHF) or automated fine-tuning.
@@ -33,7 +33,7 @@ The **CRREE Platform** is a high-fidelity simulation environment designed to ben
 
 ---
 
-## 🏗️ Architecture & System Design
+##    Architecture & System Design
 
 ### 1. The Core Environment (`env/`)
 - **`environment.py`**: Implements the OpenEnv `reset()` and `step()` lifecycle. It manages the internal state and coordinates with graders.
@@ -55,7 +55,7 @@ A FastAPI wrapper providing:
 
 ---
 
-## 📊 Advanced Metrics & Scoring
+##   Advanced Metrics & Scoring
 
 The **Final Core Score (FCS)** is defined as:
 $$Score = 0.4 \cdot BugScore + 0.15 \cdot SevScore + 0.35 \cdot SuggScore + 0.1 \cdot SecurityRisk$$
@@ -75,35 +75,35 @@ Every step tracks:
 
 ---
 
-## 🧩 Task Suite Documentation
+##   Task Suite Documentation
 
-### 🟢 Task 1: Missing Null Check
+###   Task 1: Missing Null Check
 - **Difficulty**: Easy
 - **Insight**: Tests basic defensive programming awareness.
 
-### 🟡 Task 2: Logic Flaw & Validation
+###   Task 2: Logic Flaw & Validation
 - **Difficulty**: Medium
 - **Insight**: Tests ability to spot edge cases in numerical logic.
 
-### 🔴 Task 3: SQL Injection (Classic)
+###   Task 3: SQL Injection (Classic)
 - **Difficulty**: Hard
 - **Insight**: Evaluates fundamental security awareness.
 
-### 🛡️ Task 4: Insecure Cryptography
+###    Task 4: Insecure Cryptography
 - **Difficulty**: Hard
 - **Insight**: Identifies use of MD5 and hardcoded credentials.
 
-### ⚡ Task 5: N+1 Query Problem
+###   Task 5: N+1 Query Problem
 - **Difficulty**: Hard
 - **Insight**: Deep performance analysis of database interactions.
 
-### 🏗️ Task 6: Architectural Coupling
+###    Task 6: Architectural Coupling
 - **Difficulty**: Medium
 - **Insight**: Evaluates understanding of Dependency Injection and Testability.
 
 ---
 
-## 📋 Prerequisites & Setup
+##   Prerequisites & Setup
 - **Python 3.10+**: `python --version`
 - **Git**: `git --version`
 - **Docker**: `docker --version`
@@ -118,7 +118,7 @@ pip install -r requirements.txt
 
 ---
 
-## 🚀 Deployment Guide
+##   Deployment Guide
 ### Running with Docker
 ```bash
 docker build -t crree-live .
@@ -134,11 +134,11 @@ git push -u origin main
 
 ---
 
-## 📈 Performance Benchmarks
+##   Performance Benchmarks
 *Typical evaluation pass for a GPT-4 level agent:*
 - **Avg. Score**: 0.92
 - **Avg. Latency**: 450ms
 - **Peak Memory**: 120MB (excluding model weights)
 
 ---
-© 2026 CRREE Platform Team | Optimized for Senior AI Code Review Benchmarking.
+  2026 CRREE Platform Team | Optimized for Senior AI Code Review Benchmarking.

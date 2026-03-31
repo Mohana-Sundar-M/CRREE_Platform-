@@ -1,6 +1,6 @@
 import pytest
 from fastapi.testclient import TestClient
-from crree_env.server.app import app
+from server.app import app
 
 client = TestClient(app)
 

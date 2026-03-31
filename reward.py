@@ -1,6 +1,6 @@
-from crree_env.models import Reward, CrreeAction as Action, Task
-from crree_env.graders import evaluate_action
-from crree_env.utils import monitor
+from models import Reward, CrreeAction as Action, Task
+from graders import evaluate_action
+from utils import monitor
 
 def compute_reward(action: Action, task: Task) -> Reward:
     perf = monitor.stop()

@@ -1,7 +1,7 @@
 import pytest
 from fastapi.testclient import TestClient
-from crree_env.server.app import app
-from crree_env.models import CrreeAction as Action
+from server.app import app
+from models import CrreeAction as Action
 
 client = TestClient(app)
 

@@ -3,7 +3,7 @@ import subprocess
 import tempfile
 from typing import List, Dict
 from sentence_transformers import SentenceTransformer, util
-from crree_env.models import CrreeAction as Action, Task
+from models import CrreeAction as Action, Task
 
 # Load a lightweight model for semantic similarity
 _model = None
@@ -22,11 +22,11 @@ def calculate_semantic_score(suggestions: List[str], expected_keywords: List[Lis
     total_score = 0
     
     for i in range(min(len(suggestions), len(expected_keywords))):
-        s_emb = model.encode(suggestions[i], convert_to_tensor=True)
+        s_emb = model.encode([suggestions[i]], convert_to_tensor=True)
         max_sim = 0
         for kw in expected_keywords[i]:
-            kw_emb = model.encode(kw, convert_to_tensor=True)
-            sim = util.pytorch_cos_sim(s_emb, kw_emb).item()
+            kw_emb = model.encode([kw], convert_to_tensor=True)
+            sim = util.cos_sim(s_emb, kw_emb).item()
             if sim > max_sim:
                 max_sim = sim
         
@@ -35,18 +35,24 @@ def calculate_semantic_score(suggestions: List[str], expected_keywords: List[Lis
     return min(1.0, total_score / len(expected_keywords))
 
 def run_static_analysis(diff: str) -> Dict[str, float]:
-    with tempfile.NamedTemporaryFile(suffix=".py", mode='w', delete=False) as f:
-        f.write(diff)
-        temp_path = f.name
-
     try:
-        bandit_res = subprocess.run(["bandit", "-q", "-f", "json", temp_path], capture_output=True, text=True)
+        # Standardize diff to a temporary python-like file for bandit
+        code_fragment = diff.replace("+", "").replace("-", "") # Extract new code lines purely
+        with tempfile.NamedTemporaryFile(suffix=".py", mode='w', delete=False) as f:
+            f.write(code_fragment)
+            temp_path = f.name
+            
+        bandit_res = subprocess.run(["bandit", "-q", "-v", temp_path], capture_output=True, text=True)
+        # If bandit finds issues it returns exit code 1
+        security_score = 1.0 if "No issues identified" in bandit_res.stdout else 0.5
         return {
-            "security_risk": 1.0 if not bandit_res.stderr else 0.5,
+            "security_risk": security_score,
             "complexity_score": 1.0
         }
+    except Exception:
+        return {"security_risk": 0.5, "complexity_score": 1.0}
     finally:
-        if os.path.exists(temp_path):
+        if 'temp_path' in locals() and os.path.exists(temp_path):
             os.remove(temp_path)
 
 def calculate_bug_score(detected_issues: List[str], ground_truth_issues: List[str]) -> float:
@@ -57,16 +63,17 @@ def calculate_bug_score(detected_issues: List[str], ground_truth_issues: List[st
     matches = 0
     for gt in ground_truth_issues:
         matched = False
-        gt_emb = model.encode(gt, convert_to_tensor=True)
+        gt_emb = model.encode([gt], convert_to_tensor=True)
         for det in detected_issues:
-            det_emb = model.encode(det, convert_to_tensor=True)
-            if util.pytorch_cos_sim(gt_emb, det_emb).item() > 0.7:
+            det_emb = model.encode([det], convert_to_tensor=True)
+            sim = util.cos_sim(gt_emb, det_emb).item()
+            if sim > 0.7:
                 matched = True
                 break
         if matched:
             matches += 1
             
-    return matches / len(ground_truth_issues)
+    return matches / len(ground_truth_issues) if ground_truth_issues else 1.0
 
 def evaluate_action(action: Action, task: Task) -> Dict[str, float]:
     bug_score = calculate_bug_score(action.issues, task.ground_truth_issues)

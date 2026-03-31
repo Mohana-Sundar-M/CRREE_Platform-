@@ -35,12 +35,8 @@ except Exception as e:  # pragma: no cover
         "openenv is required for the web interface. Install dependencies with '\n    uv sync\n'"
     ) from e
 
-try:
-    from ..models import CrreeAction, CrreeObservation
-    from .crree_env_environment import CrreeEnvironment
-except ModuleNotFoundError:
-    from models import CrreeAction, CrreeObservation
-    from server.crree_env_environment import CrreeEnvironment
+from models import CrreeAction, CrreeObservation
+from server.crree_env_environment import CrreeEnvironment
 
 
 # Create the app with web interface and README integration
@@ -54,41 +50,28 @@ app = create_app(
 
 @app.get("/metrics")
 async def get_metrics_endpoint():
-    from crree_env.db import get_metrics
+    from db import get_metrics
     return get_metrics()
 
 @app.get("/history")
 async def get_history_endpoint(limit: int = 10):
-    from crree_env.db import get_history
+    from db import get_history
     return get_history(limit)
 
 
-def main(host: str = "0.0.0.0", port: int = 8000):
+def main(host: str = "0.0.0.0", port: int = 7860):
     """
-    Entry point for direct execution via uv run or python -m.
-
-    This function enables running the server without Docker:
-        uv run --project . server
-        uv run --project . server --port 8001
-        python -m crree_env.server.app
-
-    Args:
-        host: Host address to bind to (default: "0.0.0.0")
-        port: Port number to listen on (default: 8000)
-
-    For production deployments, consider using uvicorn directly with
-    multiple workers:
-        uvicorn crree_env.server.app:app --workers 4
+    Entry point for direct execution.
     """
     import uvicorn
-
-    uvicorn.run(app, host=host, port=port)
+    # Use string reference to avoid issues with global imports during multi-mode loading
+    uvicorn.run("server.app:app", host=host, port=port, reload=False)
 
 
 if __name__ == "__main__":
     import argparse
-
     parser = argparse.ArgumentParser()
-    parser.add_argument("--port", type=int, default=8000)
+    parser.add_argument("--host", type=str, default="0.0.0.0")
+    parser.add_argument("--port", type=int, default=7860)
     args = parser.parse_args()
-    main(port=args.port)
+    main(host=args.host, port=args.port)
