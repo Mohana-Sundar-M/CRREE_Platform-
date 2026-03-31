@@ -1,0 +1,9 @@
+openenv-core[core]>=0.2.2
+sentence-transformers
+bandit
+radon
+psutil
+
+[dev]
+pytest>=8.0.0
+pytest-cov>=4.0.0
