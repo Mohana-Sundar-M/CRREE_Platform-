@@ -23,23 +23,25 @@ async def run_evaluation():
             print(f"[START] task={task_id}", flush=True)
             print(f"Evaluating {task_id}...", flush=True)
             
-            # 1. Reset environment
-            response = await env_client.post("/reset", params={"task_id": task_id})
-            if response.status_code != 200:
-                print(f"Failed to reset: {response.text}", flush=True)
-                print(f"[END] task={task_id} score=0.0 steps=0", flush=True)
-                continue
-            
-            obs = response.json()
-            
-            # 2. Build Prompt
-            prompt = f"""
+            try:
+                # 1. Reset environment
+                response = await env_client.post("/reset", params={"task_id": task_id})
+                if response.status_code != 200:
+                    print(f"Failed to reset: {response.text}", flush=True)
+                    print(f"[END] task={task_id} score=0.0 steps=0", flush=True)
+                    continue
+                
+                data = response.json()
+                obs = data.get("observation", data)
+                
+                # 2. Build Prompt
+                prompt = f"""
 You are a senior software reviewer. Review the following code diff:
 
-Repo: {obs['repo_name']}
-Context: {obs['context']}
+Repo: {obs.get('repo_name', 'Unknown')}
+Context: {obs.get('context', 'No context available')}
 Diff:
-{obs['diff']}
+{obs.get('diff', 'No diff provided')}
 
 Identify bugs, assess severity (low, medium, high, critical), and provide suggestions.
 Respond ONLY in JSON format:
@@ -51,33 +53,38 @@ Respond ONLY in JSON format:
 }}
 """
 
-            # 3. Call Model
-            try:
-                completion = client.chat.completions.create(
-                    model=MODEL_NAME,
-                    messages=[{"role": "user", "content": prompt}],
-                    response_format={"type": "json_object"}
-                )
-                action_data = json.loads(completion.choices[0].message.content)
-            except Exception as e:
-                print(f"Model call failed: {e}", flush=True)
-                print(f"[END] task={task_id} score=0.0 steps=0", flush=True)
-                continue
+                # 3. Call Model
+                try:
+                    completion = client.chat.completions.create(
+                        model=MODEL_NAME,
+                        messages=[{"role": "user", "content": prompt}],
+                        response_format={"type": "json_object"}
+                    )
+                    action_data = json.loads(completion.choices[0].message.content)
+                except Exception as e:
+                    print(f"Model call failed: {e}", flush=True)
+                    print(f"[END] task={task_id} score=0.0 steps=0", flush=True)
+                    continue
 
-            # 4. Step environment
-            step_response = await env_client.post("/step", json=action_data)
-            if step_response.status_code != 200:
-                print(f"Step failed: {step_response.text}", flush=True)
+                # 4. Step environment
+                step_response = await env_client.post("/step", json=action_data)
+                if step_response.status_code != 200:
+                    print(f"Step failed: {step_response.text}", flush=True)
+                    print(f"[END] task={task_id} score=0.0 steps=0", flush=True)
+                    continue
+                
+                result = step_response.json()
+                # Handle nested reward if present
+                reward_data = result.get("reward", result)
+                score = reward_data.get("score", 0.0) if isinstance(reward_data, dict) else reward_data
+                scores[task_id] = score
+                
+                print(f"[STEP] step=1 reward={score}", flush=True)
+                print(f"Score for {task_id}: {score}", flush=True)
+                print(f"[END] task={task_id} score={score} steps=1", flush=True)
+            except Exception as e:
+                print(f"Unexpected error evaluating {task_id}: {e}", flush=True)
                 print(f"[END] task={task_id} score=0.0 steps=0", flush=True)
-                continue
-            
-            result = step_response.json()
-            score = result["reward"]["score"]
-            scores[task_id] = score
-            
-            print(f"[STEP] step=1 reward={score}", flush=True)
-            print(f"Score for {task_id}: {score}", flush=True)
-            print(f"[END] task={task_id} score={score} steps=1", flush=True)
 
     # Output Results
     print("\nTask Scores:", flush=True)
