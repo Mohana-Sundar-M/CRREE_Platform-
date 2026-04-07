@@ -5,13 +5,13 @@ from openai import OpenAI
 from typing import Dict
 
 # Configuration from environment variables
-API_BASE_URL = os.getenv("API_BASE_URL", "http://localhost:7860")
-MODEL_NAME = os.getenv("MODEL_NAME", "gpt-3.5-turbo")
-HF_TOKEN = os.getenv("HF_TOKEN")
-LOCAL_IMAGE_NAME = os.getenv("LOCAL_IMAGE_NAME")
+API_BASE_URL = os.environ.get("API_BASE_URL", "http://localhost:7860")
+MODEL_NAME = os.environ.get("MODEL_NAME", "gpt-3.5-turbo")
+# Use API_KEY as primary, fallback to HF_TOKEN for legacy/local
+API_KEY = os.environ.get("API_KEY", os.environ.get("HF_TOKEN", "dummy-key"))
 
 client = OpenAI(
-    api_key=HF_TOKEN or "dummy-key",
+    api_key=API_KEY,
     base_url=API_BASE_URL
 )
 
