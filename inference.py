@@ -7,11 +7,12 @@ from typing import Dict
 # Configuration from environment variables
 API_BASE_URL = os.getenv("API_BASE_URL", "http://localhost:7860")
 MODEL_NAME = os.getenv("MODEL_NAME", "gpt-3.5-turbo")
-HF_TOKEN = os.getenv("HF_TOKEN", "")
+HF_TOKEN = os.getenv("HF_TOKEN")
+LOCAL_IMAGE_NAME = os.getenv("LOCAL_IMAGE_NAME")
 
 client = OpenAI(
-    api_key=os.getenv("OPENAI_API_KEY", "dummy-key"),
-    base_url=os.getenv("OPENAI_BASE_URL") # For local or custom endpoints
+    api_key=HF_TOKEN or "dummy-key",
+    base_url=API_BASE_URL
 )
 
 async def run_evaluation():
