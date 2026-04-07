@@ -20,12 +20,14 @@ async def run_evaluation():
 
     async with httpx.AsyncClient(base_url=API_BASE_URL) as env_client:
         for task_id in tasks:
-            print(f"Evaluating {task_id}...")
+            print(f"[START] task={task_id}", flush=True)
+            print(f"Evaluating {task_id}...", flush=True)
             
             # 1. Reset environment
             response = await env_client.post("/reset", params={"task_id": task_id})
             if response.status_code != 200:
-                print(f"Failed to reset: {response.text}")
+                print(f"Failed to reset: {response.text}", flush=True)
+                print(f"[END] task={task_id} score=0.0 steps=0", flush=True)
                 continue
             
             obs = response.json()
@@ -58,27 +60,33 @@ Respond ONLY in JSON format:
                 )
                 action_data = json.loads(completion.choices[0].message.content)
             except Exception as e:
-                print(f"Model call failed: {e}")
+                print(f"Model call failed: {e}", flush=True)
+                print(f"[END] task={task_id} score=0.0 steps=0", flush=True)
                 continue
 
             # 4. Step environment
             step_response = await env_client.post("/step", json=action_data)
             if step_response.status_code != 200:
-                print(f"Step failed: {step_response.text}")
+                print(f"Step failed: {step_response.text}", flush=True)
+                print(f"[END] task={task_id} score=0.0 steps=0", flush=True)
                 continue
             
             result = step_response.json()
-            scores[task_id] = result["reward"]["score"]
-            print(f"Score for {task_id}: {result['reward']['score']}")
+            score = result["reward"]["score"]
+            scores[task_id] = score
+            
+            print(f"[STEP] step=1 reward={score}", flush=True)
+            print(f"Score for {task_id}: {score}", flush=True)
+            print(f"[END] task={task_id} score={score} steps=1", flush=True)
 
     # Output Results
-    print("\nTask Scores:")
+    print("\nTask Scores:", flush=True)
     for task, score in scores.items():
-        print(f"{task.replace('task_', '').capitalize()}: {score}")
+        print(f"{task.replace('task_', '').capitalize()}: {score}", flush=True)
     
     if scores:
         avg = sum(scores.values()) / len(scores)
-        print(f"\nAverage: {avg:.2f}")
+        print(f"\nAverage: {avg:.2f}", flush=True)
 
 if __name__ == "__main__":
     import asyncio
