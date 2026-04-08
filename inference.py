@@ -32,6 +32,7 @@ def validate_llm_connection():
 validate_llm_connection()
 
 async def run_evaluation():
+    # Unified task list based on repo contents
     tasks = ["task_1_easy", "task_2_medium", "task_3_hard", "task_4_security", "task_5_performance", "task_6_architecture"]
     scores = {}
 
@@ -93,7 +94,13 @@ Respond ONLY in JSON format:
                 result = step_response.json()
                 # Handle nested reward if present
                 reward_data = result.get("reward", result)
-                score = reward_data.get("score", 0.0) if isinstance(reward_data, dict) else reward_data
+                # Robust score extraction with fallback to 0.0
+                score = 0.0
+                if isinstance(reward_data, dict):
+                    score = reward_data.get("score", 0.0)
+                elif isinstance(reward_data, (int, float)):
+                    score = float(reward_data)
+                
                 scores[task_id] = score
                 
                 print(f"[STEP] step=1 reward={score}", flush=True)
