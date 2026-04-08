@@ -24,9 +24,9 @@ def validate_llm_connection():
             messages=[{"role": "user", "content": "Test connection. Respond with 'OK'."}],
             max_tokens=5
         )
-        print(f"LLM Proxy Working ✅: {response.choices[0].message.content.strip()}", flush=True)
+        print(f"LLM Proxy Working [OK]: {response.choices[0].message.content.strip()}", flush=True)
     except Exception as e:
-        print(f"LLM Proxy Failed ❌: {e}", flush=True)
+        print(f"LLM Proxy Failed [ERROR]: {e}", flush=True)
 
 # Mandatory startup call to hit the proxy
 validate_llm_connection()
