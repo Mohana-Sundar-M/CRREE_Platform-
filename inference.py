@@ -5,15 +5,31 @@ from openai import OpenAI
 from typing import Dict
 
 # Configuration from environment variables
-API_BASE_URL = os.environ.get("API_BASE_URL", "http://localhost:7860")
-MODEL_NAME = os.environ.get("MODEL_NAME", "gpt-3.5-turbo")
-# Use API_KEY as primary, fallback to HF_TOKEN for legacy/local
-API_KEY = os.environ.get("API_KEY", os.environ.get("HF_TOKEN", "dummy-key"))
+# STRICT REQUIREMENTS: Use os.environ to ensure platform-provided variables are used
+API_BASE_URL = os.environ["API_BASE_URL"]
+API_KEY = os.environ["API_KEY"]
+MODEL_NAME = os.getenv("MODEL_NAME", "gpt-4o-mini")
 
 client = OpenAI(
     api_key=API_KEY,
     base_url=API_BASE_URL
 )
+
+def validate_llm_connection():
+    """Forces an initial LLM call to ensure the LiteLLM proxy detects usage."""
+    print("Verifying LLM Proxy connection...", flush=True)
+    try:
+        response = client.chat.completions.create(
+            model=MODEL_NAME,
+            messages=[{"role": "user", "content": "Test connection. Respond with 'OK'."}],
+            max_tokens=5
+        )
+        print(f"LLM Proxy Working ✅: {response.choices[0].message.content.strip()}", flush=True)
+    except Exception as e:
+        print(f"LLM Proxy Failed ❌: {e}", flush=True)
+
+# Mandatory startup call to hit the proxy
+validate_llm_connection()
 
 async def run_evaluation():
     tasks = ["task_1_easy", "task_2_medium", "task_3_hard", "task_4_security", "task_5_performance", "task_6_architecture"]
