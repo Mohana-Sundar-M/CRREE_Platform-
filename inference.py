@@ -46,7 +46,7 @@ async def run_evaluation():
                 response = await env_client.post("/reset", params={"task_id": task_id})
                 if response.status_code != 200:
                     print(f"Failed to reset: {response.text}", flush=True)
-                    print(f"[END] task={task_id} score=0.0 steps=0", flush=True)
+                    print(f"[END] task={task_id} score=0.01 steps=0", flush=True)
                     continue
                 
                 data = response.json()
@@ -81,26 +81,28 @@ Respond ONLY in JSON format:
                     action_data = json.loads(completion.choices[0].message.content)
                 except Exception as e:
                     print(f"Model call failed: {e}", flush=True)
-                    print(f"[END] task={task_id} score=0.0 steps=0", flush=True)
+                    print(f"[END] task={task_id} score=0.01 steps=0", flush=True)
                     continue
 
                 # 4. Step environment
                 step_response = await env_client.post("/step", json=action_data)
                 if step_response.status_code != 200:
                     print(f"Step failed: {step_response.text}", flush=True)
-                    print(f"[END] task={task_id} score=0.0 steps=0", flush=True)
+                    print(f"[END] task={task_id} score=0.01 steps=0", flush=True)
                     continue
                 
                 result = step_response.json()
                 # Handle nested reward if present
                 reward_data = result.get("reward", result)
-                # Robust score extraction with fallback to 0.0
-                score = 0.0
+                # Robust score extraction with fallback to 0.01
+                score = 0.01
                 if isinstance(reward_data, dict):
-                    score = reward_data.get("score", 0.0)
+                    score = reward_data.get("score", 0.01)
                 elif isinstance(reward_data, (int, float)):
                     score = float(reward_data)
                 
+                # FINAL MANDATORY CLAMPING
+                score = max(0.01, min(0.99, score))
                 scores[task_id] = score
                 
                 print(f"[STEP] step=1 reward={score}", flush=True)
@@ -108,7 +110,7 @@ Respond ONLY in JSON format:
                 print(f"[END] task={task_id} score={score} steps=1", flush=True)
             except Exception as e:
                 print(f"Unexpected error evaluating {task_id}: {e}", flush=True)
-                print(f"[END] task={task_id} score=0.0 steps=0", flush=True)
+                print(f"[END] task={task_id} score=0.01 steps=0", flush=True)
 
     # Output Results
     print("\nTask Scores:", flush=True)

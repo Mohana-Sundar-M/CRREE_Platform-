@@ -49,7 +49,7 @@ class CrreeEnvironment(Environment):
             max_steps=_MAX_STEPS,
             goal="Identify all bugs, assess severity, and provide fix suggestions.",
             done=False,
-            reward=0.0
+            reward=0.01
         )
 
     def step(self, action: CrreeAction) -> CrreeObservation:
@@ -76,11 +76,11 @@ class CrreeEnvironment(Environment):
             goal="Review completed." if done else "Continue review.",
             done=done,
             reward=reward_obj.score,
-            bug_detection=reward_obj.breakdown.get("bug_detection", 0.0),
-            severity_accuracy=reward_obj.breakdown.get("severity_accuracy", 0.0),
-            suggestion_quality=reward_obj.breakdown.get("suggestion_quality", 0.0),
-            security_score=reward_obj.breakdown.get("security_score", 0.0),
-            latency_ms=reward_obj.performance_metrics.get("latency_ms", 0.0),
-            memory_mb=reward_obj.performance_metrics.get("memory_mb", 0.0),
+            bug_detection=reward_obj.breakdown.get("bug_detection", 0.01),
+            severity_accuracy=reward_obj.breakdown.get("severity_accuracy", 0.01),
+            suggestion_quality=reward_obj.breakdown.get("suggestion_quality", 0.01),
+            security_score=reward_obj.breakdown.get("security_score", 0.01),
+            latency_ms=reward_obj.performance_metrics.get("latency_ms", 0.01),
+            memory_mb=reward_obj.performance_metrics.get("memory_mb", 0.01),
             metadata=reward_obj.breakdown
         )

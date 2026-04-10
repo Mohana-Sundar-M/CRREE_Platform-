@@ -41,7 +41,7 @@ def get_metrics():
     conn.close()
     return {
         "evaluation_count": count or 0,
-        "average_score": avg_score or 0.0
+        "average_score": avg_score or 0.01
     }
 
 init_db()

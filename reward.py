@@ -12,7 +12,7 @@ def compute_reward(action: Action, task: Task) -> Reward:
             "bug_detection": eval_results["bug_score"],
             "severity_accuracy": eval_results["severity_score"],
             "suggestion_quality": eval_results["suggestion_score"],
-            "security_score": eval_results.get("security_score", 0.0)
+            "security_score": eval_results.get("security_score", 0.01)
         },
         performance_metrics=perf
     )

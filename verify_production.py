@@ -68,10 +68,10 @@ def test_production():
         if resp.status_code == 200:
             result = resp.json()
             obs = result.get("observation", result)
-            print("✓ Environment Ready")
+            print("[+] Environment Ready")
             print(f"DIFF TO REVIEW:\n{obs.get('diff')}")
         else:
-            print(f"✗ Reset failed: {resp.status_code}")
+            print(f"[-] Reset failed: {resp.status_code}")
             return
 
         # 2. Perform Perfect Review
@@ -93,7 +93,7 @@ def test_production():
             print(f"- Memory:  {obs.get('memory_mb', 0):.2f} MB")
             print("====================================================")
         else:
-            print(f"✗ Evaluation failed: {resp.status_code}")
+            print(f"[-] Evaluation failed: {resp.status_code}")
             print(resp.text)
 
     except Exception as e:
